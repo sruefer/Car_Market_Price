@@ -7,10 +7,11 @@ output:
 ---
 
 Prior to loading the data, the libraries required for data processing and plotting should be installed and loaded (not shown in this report).
-These packages are: `rvest`, `ggplot2`. 
+These packages are: `rvest`, `dplyr`, `ggplot2`. 
 
 ```{r, include=FALSE}
 library(rvest)
+library(dplyr)
 library(ggplot2)
 ```
 
@@ -185,6 +186,60 @@ So approximately 1/3 of the value is lost over 3 years - by my experience that i
 ## So what should I set as my Sell Price?
 Let's say you have a 2014 model, basic configuration. It is probably realistic to assume that the value is in the lower 25% range of the 2014 model year.
 
-```{r}
-p + geom_hline(yintercept = )
+```{r, echo=FALSE}
+p <- ggplot(x, aes(as.factor(year), price)) + 
+      geom_boxplot() + 
+      geom_point() +
+      xlab("Model Year") + 
+      ylab("Price (AED)") +
+      ggtitle("Price Range by Model Year")
 ```
+
+```{r}
+x2014 <- x %>% filter(year == 2014)
+max_price <- quantile(x2014$price, probs = c(0.25))
+print(paste0("Maximum Price: ", max_price))
+p + geom_hline(yintercept = max_price, color = "blue")
+```
+
+The value of 68,000 AED appears high; I found a website that offers to buy used cars at a certain, calculated price, where the value of a Tiguan, Model year 2014, was evaluated at 45,000. Let's check our assumptions again.
+
+## Review of Data Bias
+Ideally, this step should have been done much earlier - however, this is an iterative process, so it's ok to do it now (we did not sell anything yet!).
+
+My assumptions (or believes) about the data are:
+
+- No quoted price is equivalent to a new price (because the moment a car leaves the showroom it loses value).
+- Sellers tend to aim high, i.e. their price is their first negotiation position. The actual value therefore is lower.
+- The price contains other factors than only the data I extracted, and I cannot be sure about their influence.
+- Market price is usually not equivalent to actual selling price (there is a lot of competition!).
+
+Let's review these assumptions and see if they can be used to adjust the price.
+
+The first assumption is important for understanding value loss over time if the car was purchased new. It is interesting for constructing a decline curve, but it is meaningless for determining current market value.
+
+The second assumption can be used to adjust price by using another assumption: how much lower should the actual price be set compared to the *first negotiation position*? I will assume a **15%** adjustment downwards.
+
+The third assumption does not help due to lack of data.
+
+The fourth assumption, similar to the second one, can be used to adjust the price downwards based on experience, or simply by making a guess. I will assume that this will drop the price by a further **5%**.
+
+```{r}
+# Price drop by 15%, assumption 2
+max_price_1 <- max_price * (1 - 0.15)
+
+# Price drop by another 5%, assumption 4
+max_price_2 <- max_price_1 * (1 - 0.05)
+
+print(paste0("Final Price: ", max_price_2))
+```
+
+## Summary
+Based on above calculations, I would assume now, within an error range, that I could sell the car for approximately 55,000 AED. There are additional factors that cause price uncertainty though, for example:
+
+- Systematic error: limited data, market bias, etc.
+- Number of kilometers: we did not include this here in the estimate.
+- Additional damages to the car, like a fender bender.
+- Color, new model just came out, other value perceptions.
+
+

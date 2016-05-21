@@ -71,7 +71,8 @@ x <- data.frame(year = year, kilometer = kilometer, price = price)
 summary(x)
 
 # Show boxplot
-ggplot(x, aes(as.factor(year), price)) + geom_boxplot() + geom_jitter(width = 0.2)
+p <- ggplot(x, aes(as.factor(year), price)) + geom_boxplot() + geom_jitter(width = 0.2)
+p
 
 # Remove outliers
 min(x$price)  # outliers are priced at 20 kAED
@@ -93,4 +94,8 @@ decline_pct
 
 summary(x)
 
-quantile(subset(x, year == 2014, select = price)$price, probs = )
+x2014 <- x %>% filter(year == 2014)
+hist(x2014$price)
+p + geom_hline(yintercept = quantile(x2014$price, probs = c(0.25)), color = "red")
+
+
